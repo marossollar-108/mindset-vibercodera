@@ -1235,17 +1235,17 @@
      ================================================================ */
   .transcript {
     position: absolute;
-    bottom: 32px;
+    bottom: 24px;
     left: 64px;
-    width: clamp(360px, 32vw, 520px);
-    height: clamp(140px, 18vh, 200px);
+    width: clamp(320px, 30vw, 480px);
+    height: clamp(120px, 16vh, 170px);
     background: var(--paper-2);
     border: 1px solid var(--ink);
-    padding: 16px 20px 14px;
+    padding: 14px 18px 12px;
     overflow: hidden;
     z-index: 5;
     pointer-events: none;
-    opacity: 0.92;
+    opacity: 1;
   }
   .transcript::before {
     content: 'LIVE · TRANSCRIPT';
@@ -1272,9 +1272,9 @@
   }
   .transcript-inner {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(12px, 0.95vw, 14px);
+    font-size: clamp(13px, 1vw, 15px);
     line-height: 1.65;
-    color: var(--ink-mute);
+    color: var(--ink-soft);
     letter-spacing: 0.01em;
     transition: transform 0.3s ease;
     word-spacing: 1px;
@@ -1285,11 +1285,13 @@
     padding: 0 1px;
   }
   .transcript-inner .word.spoken {
-    color: var(--ink-soft);
+    color: var(--ink);
+    font-weight: 500;
   }
   .transcript-inner .word.current {
     color: var(--paper);
     background: var(--accent);
+    font-weight: 500;
   }
 
   @media (max-width: 1100px) {
@@ -2189,22 +2191,23 @@
 
   function loadAudioForCurrentSlide() {
     pauseAudio();
+    resetTranscript(currentSlide);
     const entry = slideAudio[currentSlide];
     if (entry) {
       audioPlayer.src = entry.url;
+      audioPlayer.load();
       audioBtn.disabled = false;
-      audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · ${entry.name}`;
+      audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
       if (userHasInteracted) {
         const p = audioPlayer.play();
         if (p && typeof p.then === 'function') {
           p.then(() => {
             audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
+            audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · prehráva`;
           }).catch(() => {
             audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
           });
         }
-      } else {
-        audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
       }
     } else {
       audioPlayer.removeAttribute('src');
@@ -2217,13 +2220,25 @@
 
   function toggleAudio() {
     if (!audioPlayer.src) return;
+    userHasInteracted = true;
     if (audioPlayer.paused) {
-      audioPlayer.play();
-      audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
+      const p = audioPlayer.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
+          audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · prehráva`;
+        }).catch((err) => {
+          audioStatus.textContent = `Chyba: ${err.message || err.name}`;
+        });
+      }
     } else {
       pauseAudio();
     }
   }
+
+  audioPlayer.addEventListener('error', () => {
+    audioStatus.textContent = `Audio chyba (slide ${String(currentSlide).padStart(2,'0')})`;
+  });
 
   function pauseAudio() {
     if (!audioPlayer.paused) audioPlayer.pause();
