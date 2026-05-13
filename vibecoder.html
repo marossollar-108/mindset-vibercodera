@@ -520,6 +520,36 @@
   .tree-step.final .step-body span { color: var(--paper-2); opacity: 0.7; }
   .tree-step.final .step-arrow { color: var(--accent); }
 
+  /* Tree code — typing animation when step 5 reveals */
+  .tree-code {
+    margin-top: 14px;
+    background: var(--ink);
+    color: var(--paper-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 16px 20px;
+    border-left: 3px solid var(--accent);
+    min-height: 144px;
+    white-space: pre;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .tree-code.active { opacity: 1; transform: translateY(0); }
+  .tree-code .prompt { color: var(--accent); }
+  .tree-code .ok { color: #6FCF8A; }
+  .tree-code .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    vertical-align: -2px;
+    animation: codeCursor 0.9s steps(1) infinite;
+  }
+  @keyframes codeCursor { 50% { opacity: 0; } }
+
   .tree-cta {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -1568,6 +1598,8 @@
             </div>
           </div>
 
+          <pre class="tree-code" id="tree-code" aria-hidden="true"></pre>
+
           <div class="tree-cta reveal" id="tree-cta" style="display:none;">
             Klikni na kroky alebo stlač <strong style="color: var(--ink);">↓</strong> · alebo <button onclick="revealAllTreeSteps()">odhaľ všetko naraz</button>
           </div>
@@ -2256,9 +2288,17 @@
   }
 
   // Auto-reveal tree steps in sync with slide-3 audio
+  let codeAnimTimer = null;
   function resetTreeSteps() {
     const steps = document.querySelectorAll('#tree .tree-step');
     steps.forEach((s, i) => s.classList.toggle('revealed', i === 0));
+    const code = document.getElementById('tree-code');
+    if (code) {
+      code.classList.remove('active');
+      code.innerHTML = '';
+      code.dataset.played = '';
+    }
+    if (codeAnimTimer) { clearTimeout(codeAnimTimer); codeAnimTimer = null; }
   }
   function updateTreeSteps() {
     if (currentSlide !== 3) return;
@@ -2268,6 +2308,44 @@
     steps.forEach((s, i) => {
       if (i === 0 || ratio >= i / steps.length) s.classList.add('revealed');
     });
+    const lastRevealed = steps[steps.length - 1].classList.contains('revealed');
+    const code = document.getElementById('tree-code');
+    if (lastRevealed && code && code.dataset.played !== '1') {
+      code.dataset.played = '1';
+      animateTreeCode();
+    }
+  }
+
+  function animateTreeCode() {
+    const code = document.getElementById('tree-code');
+    if (!code) return;
+    code.classList.add('active');
+    const lines = [
+      { t: '<span class="prompt">$</span> ', body: 'analyzuj("nápad")', after: '\n<span class="ok">→</span> rozumiem, viem ako\n' },
+      { t: '<span class="prompt">$</span> ', body: 'design("ui")',        after: '\n<span class="ok">→</span> mockup pripravený\n' },
+      { t: '<span class="prompt">$</span> ', body: 'kódim("mvp")',         after: '\n<span class="ok">→</span> deployujem… ' },
+    ];
+    let i = 0;
+    function typeNext() {
+      if (i >= lines.length) {
+        code.innerHTML += '<span class="cursor"></span>';
+        return;
+      }
+      const line = lines[i++];
+      code.innerHTML += line.t;
+      let pos = 0;
+      function typeChar() {
+        if (pos < line.body.length) {
+          code.innerHTML += line.body[pos++];
+          codeAnimTimer = setTimeout(typeChar, 35 + Math.random() * 45);
+        } else {
+          code.innerHTML += line.after;
+          codeAnimTimer = setTimeout(typeNext, 380);
+        }
+      }
+      typeChar();
+    }
+    typeNext();
   }
 
   audioPlayer.addEventListener('timeupdate', updateTranscript);
