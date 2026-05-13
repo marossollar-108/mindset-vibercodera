@@ -1,0 +1,2276 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindset Vibecodera — Maroš Sollár</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=JetBrains+Mono:wght@300;400;500;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F2EEE5;
+    --paper-2: #E8E2D3;
+    --ink: #161513;
+    --ink-soft: #3A3733;
+    --ink-mute: #8A8478;
+    --accent: #FF3D14;
+    --accent-soft: #FFE0D6;
+    --rule: #1615131A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter Tight', -apple-system, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Paper grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
+  }
+
+  /* ================================================================
+     LAYOUT SHELL
+     ================================================================ */
+  .shell {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--rule);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    z-index: 10;
+    background: var(--paper);
+  }
+
+  .topbar-left { display: flex; gap: 24px; align-items: center; }
+  .brand-mark {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.7); opacity: 0.5; }
+  }
+
+  .topbar-right { display: flex; gap: 20px; align-items: center; }
+  .topbar a, .topbar button {
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .topbar a:hover, .topbar button:hover { color: var(--accent); }
+
+  /* Slide stage */
+  .stage {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 48px 64px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    overflow-y: auto;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Bottom bar */
+  .bottombar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+    border-top: 1px solid var(--rule);
+    background: var(--paper);
+    z-index: 10;
+    gap: 24px;
+  }
+
+  /* Audio player */
+  .audio-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+    max-width: 500px;
+  }
+  .audio-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .audio-btn:hover { background: var(--accent); }
+  .audio-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .audio-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+  .audio-info {
+    flex: 1;
+    min-width: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+  .audio-info-line {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .audio-status { color: var(--ink-soft); }
+  .audio-time { font-variant-numeric: tabular-nums; }
+
+  .waveform {
+    height: 14px;
+    display: flex;
+    align-items: center;
+    gap: 1.5px;
+  }
+  .wave-bar {
+    flex: 1;
+    background: var(--ink-mute);
+    border-radius: 1px;
+    transition: background 0.15s, height 0.15s;
+  }
+  .wave-bar.played { background: var(--accent); }
+
+  .upload-label { display: none; }
+
+  /* Nav controls */
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    width: 36px; height: 36px;
+    background: none;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { background: var(--ink); color: var(--paper); }
+  .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+  .nav-btn:disabled:hover { background: none; color: var(--ink); }
+  .nav-btn svg { width: 14px; height: 14px; }
+
+  .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    min-width: 60px;
+    text-align: center;
+  }
+  .slide-counter strong { color: var(--ink); font-weight: 500; }
+
+  /* Progress dots */
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+  .dot {
+    width: 22px;
+    height: 3px;
+    background: var(--rule);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+  }
+  .dot.active { background: var(--ink); }
+  .dot.visited { background: var(--ink-soft); }
+  .dot:hover { background: var(--accent); }
+
+  /* ================================================================
+     SLIDE TYPOGRAPHY — shared
+     ================================================================ */
+  .slide-num {
+    position: absolute;
+    top: 32px;
+    right: 64px;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(220px, 32vw, 480px);
+    font-weight: 200;
+    line-height: 0.8;
+    color: var(--accent);
+    opacity: 0.06;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1, h2, h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  .quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+
+  .body-text {
+    font-family: 'Inter Tight', sans-serif;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    font-size: 16px;
+    max-width: 56ch;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-mute);
+  }
+
+  /* ================================================================
+     SLIDE 1 — INTRO
+     ================================================================ */
+  #slide-1 .slide-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 40px;
+  }
+  #slide-1 .meta-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  #slide-1 .meta-top div { display: flex; flex-direction: column; gap: 4px; }
+  #slide-1 .meta-top strong { color: var(--ink); font-weight: 500; }
+
+  #slide-1 .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 1200px;
+  }
+  #slide-1 .hero h1 {
+    font-size: clamp(64px, 9vw, 148px);
+    line-height: 0.92;
+  }
+  #slide-1 .hero h1 .accent {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 300;
+  }
+  #slide-1 .hero h1 .underline {
+    background: linear-gradient(transparent 75%, var(--accent-soft) 75%);
+    padding: 0 4px;
+  }
+
+  #slide-1 .hero-sub {
+    margin-top: 32px;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(18px, 1.6vw, 24px);
+    font-style: italic;
+    color: var(--ink-soft);
+    max-width: 700px;
+    line-height: 1.4;
+  }
+
+  #slide-1 .meta-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  #slide-1 .author-block strong {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-style: normal;
+    font-size: 18px;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  #slide-1 .scroll-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+  }
+  #slide-1 .scroll-hint::after {
+    content: '→';
+    font-size: 18px;
+    animation: nudge 1.6s ease-in-out infinite;
+  }
+  @keyframes nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(6px); }
+  }
+
+  /* ================================================================
+     SLIDE 2 — Premýšľam v aplikáciách
+     ================================================================ */
+  #slide-2 .slide-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  #slide-2 .left h2 {
+    font-size: clamp(40px, 5vw, 76px);
+    margin-bottom: 32px;
+  }
+  #slide-2 .left h2 em {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 300;
+  }
+  #slide-2 .left .quote {
+    font-size: clamp(22px, 2.4vw, 32px);
+    margin-top: 32px;
+    padding-left: 24px;
+    border-left: 2px solid var(--accent);
+  }
+
+  #slide-2 .diagram {
+    position: relative;
+    aspect-ratio: 1;
+    max-height: 60vh;
+    margin: 0 auto;
+  }
+  #slide-2 .diagram svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ================================================================
+     SLIDE 3 — Decision tree
+     ================================================================ */
+  #slide-3 .slide-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 32px;
+  }
+  #slide-3 h2 {
+    font-size: clamp(36px, 4.6vw, 64px);
+    max-width: 18ch;
+  }
+  #slide-3 h2 em {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .tree {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .tree-step {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: 18px 24px;
+    background: var(--paper-2);
+    border-left: 3px solid var(--ink);
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    opacity: 0.4;
+  }
+  .tree-step.revealed {
+    opacity: 1;
+    border-left-color: var(--accent);
+  }
+  .tree-step:hover.revealed {
+    transform: translateX(4px);
+  }
+  .tree-step .step-num {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .tree-step .step-body strong {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .tree-step .step-body span {
+    font-family: 'Inter Tight', sans-serif;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .tree-step .step-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-mute);
+    font-size: 18px;
+  }
+  .tree-step.final {
+    background: var(--ink);
+    color: var(--paper);
+    border-left-color: var(--accent);
+  }
+  .tree-step.final .step-body strong { color: var(--paper); }
+  .tree-step.final .step-body span { color: var(--paper-2); opacity: 0.7; }
+  .tree-step.final .step-arrow { color: var(--accent); }
+
+  .tree-cta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    margin-top: 12px;
+  }
+  .tree-cta button {
+    background: none;
+    border: none;
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ================================================================
+     SLIDE 4 — Rozmieňať na drobné
+     ================================================================ */
+  #slide-4 .slide-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 64px;
+    align-items: center;
+  }
+  #slide-4 .left h2 {
+    font-size: clamp(40px, 5vw, 72px);
+    margin-bottom: 28px;
+  }
+  #slide-4 .left h2 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 300;
+  }
+  #slide-4 .left .body-text {
+    font-size: 17px;
+  }
+  #slide-4 .left .body-text + .body-text {
+    margin-top: 16px;
+  }
+
+  .breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .breakdown-stage {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .block {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+  }
+  .block.big {
+    padding: 28px 36px;
+    font-size: 24px;
+  }
+  .block.accent {
+    background: var(--accent);
+    color: var(--paper);
+  }
+  .block.outline {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+  }
+  .breakdown-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-mute);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    padding: 0 4px;
+  }
+  .breakdown-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+  }
+  .breakdown-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ================================================================
+     SLIDE 5 — LIMITLESS (inverted, cinematic)
+     ================================================================ */
+  .slide.limitless {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .slide.limitless .slide-num {
+    color: var(--accent);
+    opacity: 0.08;
+  }
+  .slide.limitless .eyebrow {
+    color: var(--accent);
+  }
+  .slide.limitless .eyebrow::before {
+    background: var(--accent);
+  }
+  .slide.limitless .transcript {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .slide.limitless .transcript::before {
+    background: var(--ink);
+    color: rgba(255, 255, 255, 0.4);
+  }
+  .slide.limitless .transcript-inner {
+    color: rgba(255, 255, 255, 0.3);
+  }
+  .slide.limitless .transcript-inner .word.spoken {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .limitless-grid {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Subtle "expanding mind" visual on background */
+  .slide.limitless::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 30%;
+    width: 600px;
+    height: 600px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, var(--accent) 0%, transparent 60%);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+    animation: limitlessPulse 4s ease-in-out infinite;
+  }
+  @keyframes limitlessPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.10; }
+    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.18; }
+  }
+
+  .limitless-title {
+    font-size: clamp(80px, 13vw, 220px);
+    line-height: 0.85;
+    color: var(--paper);
+    margin-bottom: 28px;
+    letter-spacing: -0.04em;
+    font-weight: 300;
+    font-style: italic;
+  }
+  .limitless-title .dot {
+    color: var(--accent);
+    font-style: normal;
+  }
+
+  /* Pill + brain illustration */
+  .pill-brain {
+    margin-top: 40px;
+    max-width: 380px;
+  }
+  .pill-brain svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Synapse pulse */
+  .synapse {
+    animation: synapsePulse 2.5s ease-in-out infinite;
+  }
+  .synapse.s1 { animation-delay: 0s; }
+  .synapse.s2 { animation-delay: 0.4s; }
+  .synapse.s3 { animation-delay: 0.8s; }
+  .synapse.s4 { animation-delay: 1.2s; }
+  .synapse.s5 { animation-delay: 1.6s; }
+  @keyframes synapsePulse {
+    0%, 100% { opacity: 0.4; r: 2; }
+    50% { opacity: 1; r: 3.5; }
+  }
+
+  /* Energy arrow flow */
+  .energy-arrow path {
+    stroke-dasharray: 3 4;
+    animation: energyFlow 1.5s linear infinite;
+  }
+  @keyframes energyFlow {
+    to { stroke-dashoffset: -14; }
+  }
+
+  /* Brain glow lines breathing */
+  .brain-glow {
+    animation: brainBreathe 3s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes brainBreathe {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+  }
+
+  .limitless-sub {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(18px, 1.7vw, 24px);
+    font-style: italic;
+    color: rgba(242, 238, 229, 0.7);
+    line-height: 1.4;
+    max-width: 480px;
+  }
+
+  .manifest {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 32px;
+  }
+  .manifest-line {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 20px;
+    align-items: baseline;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(242, 238, 229, 0.12);
+  }
+  .manifest-line:last-child {
+    border-bottom: none;
+  }
+  .manifest-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .manifest-text {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: rgba(242, 238, 229, 0.85);
+  }
+  .manifest-text strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+  .manifest-text em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  .limitless-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .tag-pill {
+    padding: 6px 14px;
+    border: 1px solid rgba(242, 238, 229, 0.3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(242, 238, 229, 0.7);
+  }
+  .tag-pill.accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+
+  @media (max-width: 900px) {
+    .limitless-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      align-content: start;
+      padding-top: 20px;
+    }
+    .slide.limitless::after {
+      width: 300px;
+      height: 300px;
+      left: 50%;
+      top: 30%;
+    }
+  }
+
+  /* ================================================================
+     SLIDE 6 — FINALE / APPS GRID
+     ================================================================ */
+  .slide.grid-finale .slide-content {
+    height: 100%;
+    position: relative;
+    z-index: 1;
+  }
+  .finale-grid {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 24px;
+  }
+
+  .finale-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 48px;
+  }
+  .finale-title {
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 0.95;
+    max-width: 16ch;
+    flex-shrink: 0;
+  }
+  .finale-title .it {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 300;
+  }
+  .finale-lead {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: clamp(15px, 1.3vw, 18px);
+    line-height: 1.4;
+    color: var(--ink-soft);
+    max-width: 32ch;
+    text-align: right;
+  }
+  .finale-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-top: 6px;
+  }
+
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    align-content: center;
+  }
+
+  .app-tile {
+    background: var(--paper-2);
+    border: 1px solid var(--ink);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 90px;
+    transition: all 0.25s;
+    position: relative;
+    cursor: default;
+  }
+  .app-tile:hover {
+    background: var(--ink);
+    color: var(--paper);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--accent);
+  }
+  .app-tile:hover .app-cat {
+    color: var(--accent);
+  }
+  .app-tile:hover .app-desc {
+    color: var(--paper-2);
+    opacity: 0.7;
+  }
+
+  .app-tile.featured {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .app-tile.featured .app-cat { color: var(--accent); }
+  .app-tile.featured .app-desc { color: var(--paper-2); opacity: 0.7; }
+  .app-tile.featured:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .app-tile.featured:hover .app-cat { color: var(--ink); }
+
+  .app-tile.more {
+    background: transparent;
+    border: 1px dashed var(--ink-mute);
+    align-items: flex-start;
+  }
+  .app-tile.more .app-name {
+    color: var(--ink-mute);
+  }
+  .app-tile.more:hover {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--ink);
+    box-shadow: none;
+  }
+
+  .app-cat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    transition: color 0.2s;
+  }
+  .app-name {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .app-desc {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 10.5px;
+    line-height: 1.3;
+    color: var(--ink-mute);
+    margin-top: auto;
+    transition: color 0.2s, opacity 0.2s;
+  }
+
+  .finale-footer {
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+  }
+  .finale-closing {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.45;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .finale-closing strong {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  @media (max-width: 900px) {
+    .finale-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .finale-lead { text-align: left; }
+    .apps-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .app-tile { min-height: 72px; padding: 10px; }
+    .app-name { font-size: 13px; }
+    .app-desc { font-size: 9.5px; }
+  }
+
+  /* ================================================================
+     EXAMPLE SLIDES (5, 6, 7)
+     ================================================================ */
+  .example-slide .slide-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 56px;
+    align-items: stretch;
+  }
+  .example-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .example-meta .pill {
+    padding: 3px 8px;
+    background: var(--accent);
+    color: var(--paper);
+  }
+  .example-slide h2 {
+    font-size: clamp(48px, 6vw, 88px);
+    line-height: 0.9;
+    margin-bottom: 24px;
+  }
+  .example-slide h2 .it {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--accent);
+  }
+  .example-slide .lead {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.6vw, 22px);
+    line-height: 1.4;
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+    padding-left: 16px;
+    border-left: 2px solid var(--accent);
+  }
+  .example-slide .left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .example-slide ul.features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .example-slide ul.features li {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .example-slide ul.features li::before {
+    content: '→';
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Sketch-style app preview */
+  .sketch {
+    background: var(--paper-2);
+    border: 1px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--ink);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    align-self: center;
+    width: 100%;
+    max-width: 560px;
+    justify-self: end;
+  }
+  .sketch::before {
+    content: 'WIREFRAME';
+    position: absolute;
+    top: -12px;
+    right: 12px;
+    background: var(--accent);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    padding: 3px 8px;
+  }
+  .sketch-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .sketch-dots { display: flex; gap: 5px; }
+  .sketch-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--ink);
+  }
+  .sketch-grid {
+    display: grid;
+    gap: 10px;
+  }
+  .sketch-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .sketch-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .sketch-cell {
+    border: 1px solid var(--ink);
+    padding: 12px;
+    min-height: 60px;
+    background: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+  .sketch-cell.accent {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+  .sketch-cell.dark {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .sketch-cell .lbl {
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .sketch-cell.accent .lbl, .sketch-cell.dark .lbl {
+    color: var(--paper);
+  }
+  .sketch-cell .ln {
+    height: 4px;
+    background: var(--ink-mute);
+    opacity: 0.4;
+    border-radius: 2px;
+  }
+  .sketch-cell .ln.short { width: 60%; }
+  .sketch-cell .ln.shorter { width: 35%; }
+
+  .sketch-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .sketch-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border: 1px solid var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .sketch-tag.solid {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .sketch-tag.accent {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+
+  /* ================================================================
+     SLIDE 7 — Outro variation
+     ================================================================ */
+  #slide-7 .slide-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 56px;
+    align-items: center;
+  }
+  #slide-7 .outro-block {
+    margin-top: 48px;
+    padding: 28px;
+    background: var(--ink);
+    color: var(--paper);
+    max-width: 520px;
+  }
+  #slide-7 .outro-block .eyebrow {
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  #slide-7 .outro-block .quote {
+    font-size: 22px;
+    color: var(--paper);
+    line-height: 1.3;
+  }
+  #slide-7 .outro-block code {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--paper);
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    margin-top: 12px;
+    font-style: normal;
+  }
+
+  /* ================================================================
+     MINI TRANSCRIPT BOX — decorative live caption
+     ================================================================ */
+  .transcript {
+    position: absolute;
+    bottom: 20px;
+    left: 64px;
+    width: 220px;
+    height: 64px;
+    background: var(--paper-2);
+    border: 1px solid var(--ink);
+    padding: 8px 10px;
+    overflow: hidden;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  .transcript::before {
+    content: 'LIVE · TRANSCRIPT';
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    background: var(--paper);
+    padding: 0 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: var(--ink-mute);
+  }
+  .transcript::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .transcript-inner {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5px;
+    line-height: 1.5;
+    color: var(--ink-mute);
+    letter-spacing: 0.02em;
+    transition: transform 0.3s ease;
+    word-spacing: 1px;
+  }
+  .transcript-inner .word {
+    display: inline;
+    transition: color 0.15s ease, background 0.15s ease;
+    padding: 0 1px;
+  }
+  .transcript-inner .word.spoken {
+    color: var(--ink-soft);
+  }
+  .transcript-inner .word.current {
+    color: var(--paper);
+    background: var(--accent);
+  }
+
+  @media (max-width: 900px) {
+    .transcript { display: none; }
+  }
+
+  /* ================================================================
+     ANIMATIONS for slide entry
+     ================================================================ */
+  .slide.active .reveal {
+    animation: revealUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .slide.active .reveal:nth-child(2) { animation-delay: 0.1s; }
+  .slide.active .reveal:nth-child(3) { animation-delay: 0.2s; }
+  .slide.active .reveal:nth-child(4) { animation-delay: 0.3s; }
+  .slide.active .reveal:nth-child(5) { animation-delay: 0.4s; }
+  .slide.active .reveal:nth-child(6) { animation-delay: 0.5s; }
+
+  @keyframes revealUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ================================================================
+     RESPONSIVE
+     ================================================================ */
+  @media (max-width: 900px) {
+    .slide { padding: 28px 24px 24px; }
+    .slide-num { right: 24px; top: 16px; font-size: 180px; }
+    .topbar, .bottombar { padding: 12px 16px; }
+    .topbar-left .topbar-title { display: none; }
+
+    #slide-1 .slide-content,
+    #slide-2 .slide-content,
+    #slide-3 .slide-content,
+    #slide-4 .slide-content,
+    .example-slide .slide-content,
+    #slide-7 .slide-content {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    #slide-2 .diagram { max-height: 300px; }
+    .tree-step { grid-template-columns: 40px 1fr; }
+    .tree-step .step-arrow { display: none; }
+
+    .sketch { box-shadow: 4px 4px 0 var(--ink); }
+    .audio-info-line { display: none; }
+    .upload-label { display: none; }
+    .audio-wrap { max-width: none; }
+    .nav-controls { gap: 8px; }
+    .dots { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand-mark"></div>
+      <span class="topbar-title">Mindset Vibecodera</span>
+    </div>
+    <div class="topbar-right">
+      <span>Maroš Sollár · 2026</span>
+      <button onclick="toggleHelp()">?</button>
+    </div>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage" id="stage">
+
+    <!-- ============ SLIDE 1: INTRO ============ -->
+    <section class="slide active" id="slide-1" data-title="Intro">
+      <div class="slide-num">01</div>
+      <div class="slide-content">
+
+        <div class="meta-top reveal">
+          <div>
+            <span>Prezentácia</span>
+            <strong>5 minút · 6 kapitol</strong>
+          </div>
+          <div style="text-align: right;">
+            <span>Ver. 1.0</span>
+            <strong>Sk / 2026</strong>
+          </div>
+        </div>
+
+        <div class="hero">
+          <div class="eyebrow reveal">Manifest pre tvorcov · 01</div>
+          <h1 class="reveal">
+            Aplikácie sú&nbsp;len<br>
+            <span class="accent">rozmenené</span><br>
+            <span class="underline">procesy.</span>
+          </h1>
+          <p class="hero-sub reveal">
+            O tom, ako premýšľam, keď&nbsp;mi niečo chýba — a&nbsp;za pol hodiny si&nbsp;to&nbsp;urobím.
+          </p>
+        </div>
+
+        <div class="meta-bottom reveal">
+          <div class="author-block">
+            <strong>Maroš Sollár</strong>
+            <span>Túlavé kino · Stereo kino · Wonderhub</span>
+          </div>
+          <div class="scroll-hint">Začni</div>
+        </div>
+
+      </div>
+      <div class="transcript"><div class="transcript-inner" data-slide="1"></div></div>
+    </section>
+
+    <!-- ============ SLIDE 2: Premýšľam v aplikáciách ============ -->
+    <section class="slide" id="slide-2" data-title="Premýšľam v aplikáciách">
+      <div class="slide-num">02</div>
+      <div class="slide-content">
+
+        <div class="left">
+          <div class="eyebrow reveal">Ako premýšľam</div>
+          <h2 class="reveal">Premýšľam <em>v&nbsp;aplikáciách.</em></h2>
+          <p class="body-text reveal" style="font-size: 17px;">
+            Fyzický proces si predstavujem ako 3D hru. Postavičky niekam chodia, niečo robia, niečo si podávajú. Akurát v mojich appkách to nemusím vizualizovať — stačí mi to v hlave.
+          </p>
+          <div class="quote reveal">
+            „Veď čo iné <em>je</em> aplikácia? Rozmenený proces."
+          </div>
+        </div>
+
+        <div class="diagram reveal">
+          <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- Physical process side -->
+            <g>
+              <text x="50" y="40" font-family="JetBrains Mono, monospace" font-size="11" fill="#8A8478" letter-spacing="2">FYZICKÝ PROCES</text>
+
+              <!-- Building outline -->
+              <rect x="40" y="60" width="180" height="180" fill="none" stroke="#161513" stroke-width="1.5"/>
+
+              <!-- Rooms -->
+              <line x1="40" y1="140" x2="220" y2="140" stroke="#161513" stroke-width="0.8" stroke-dasharray="2,3"/>
+              <line x1="130" y1="60" x2="130" y2="240" stroke="#161513" stroke-width="0.8" stroke-dasharray="2,3"/>
+
+              <!-- Person 1 -->
+              <circle cx="75" cy="95" r="6" fill="#FF3D14"/>
+              <line x1="75" y1="101" x2="75" y2="115" stroke="#FF3D14" stroke-width="1.5"/>
+              <line x1="75" y1="115" x2="68" y2="125" stroke="#FF3D14" stroke-width="1.5"/>
+              <line x1="75" y1="115" x2="82" y2="125" stroke="#FF3D14" stroke-width="1.5"/>
+
+              <!-- Person 2 -->
+              <circle cx="170" cy="100" r="6" fill="#161513"/>
+              <line x1="170" y1="106" x2="170" y2="120" stroke="#161513" stroke-width="1.5"/>
+              <line x1="170" y1="120" x2="163" y2="130" stroke="#161513" stroke-width="1.5"/>
+              <line x1="170" y1="120" x2="177" y2="130" stroke="#161513" stroke-width="1.5"/>
+
+              <!-- Person 3 -->
+              <circle cx="90" cy="180" r="6" fill="#161513"/>
+              <line x1="90" y1="186" x2="90" y2="200" stroke="#161513" stroke-width="1.5"/>
+              <line x1="90" y1="200" x2="83" y2="210" stroke="#161513" stroke-width="1.5"/>
+              <line x1="90" y1="200" x2="97" y2="210" stroke="#161513" stroke-width="1.5"/>
+
+              <!-- Movement arrows -->
+              <path d="M 95 95 Q 130 85 160 100" stroke="#FF3D14" stroke-width="1" fill="none" stroke-dasharray="3,2"/>
+              <path d="M 170 130 Q 130 160 95 175" stroke="#161513" stroke-width="0.8" fill="none" stroke-dasharray="3,2" opacity="0.5"/>
+
+              <!-- Item -->
+              <rect x="183" y="180" width="24" height="20" fill="none" stroke="#161513" stroke-width="1"/>
+              <text x="195" y="194" font-family="JetBrains Mono, monospace" font-size="8" fill="#161513" text-anchor="middle">DOC</text>
+            </g>
+
+            <!-- Arrow transformation -->
+            <g transform="translate(240, 130)">
+              <line x1="0" y1="20" x2="20" y2="20" stroke="#161513" stroke-width="1.5"/>
+              <polyline points="14,14 20,20 14,26" fill="none" stroke="#161513" stroke-width="1.5"/>
+              <text x="10" y="50" font-family="JetBrains Mono, monospace" font-size="9" fill="#FF3D14" text-anchor="middle" letter-spacing="1">MAPUJEM</text>
+            </g>
+
+            <!-- App side -->
+            <g transform="translate(280, 0)">
+              <text x="0" y="40" font-family="JetBrains Mono, monospace" font-size="11" fill="#8A8478" letter-spacing="2">APLIKÁCIA</text>
+
+              <!-- App frame -->
+              <rect x="0" y="60" width="180" height="180" fill="#F2EEE5" stroke="#161513" stroke-width="1.5"/>
+
+              <!-- Top bar -->
+              <rect x="0" y="60" width="180" height="20" fill="#161513"/>
+              <circle cx="10" cy="70" r="2" fill="#FF3D14"/>
+              <circle cx="18" cy="70" r="2" fill="#F2EEE5"/>
+              <circle cx="26" cy="70" r="2" fill="#F2EEE5"/>
+
+              <!-- Cells representing entities -->
+              <rect x="12" y="92" width="74" height="50" fill="none" stroke="#161513" stroke-width="1"/>
+              <text x="18" y="108" font-family="JetBrains Mono, monospace" font-size="8" fill="#161513">USER:01</text>
+              <line x1="18" y1="118" x2="60" y2="118" stroke="#8A8478" stroke-width="2" opacity="0.5"/>
+              <line x1="18" y1="125" x2="48" y2="125" stroke="#8A8478" stroke-width="2" opacity="0.5"/>
+
+              <rect x="94" y="92" width="74" height="50" fill="#FF3D14" stroke="#FF3D14" stroke-width="1"/>
+              <text x="100" y="108" font-family="JetBrains Mono, monospace" font-size="8" fill="#F2EEE5">USER:02</text>
+              <line x1="100" y1="118" x2="142" y2="118" stroke="#F2EEE5" stroke-width="2" opacity="0.6"/>
+              <line x1="100" y1="125" x2="130" y2="125" stroke="#F2EEE5" stroke-width="2" opacity="0.6"/>
+
+              <rect x="12" y="152" width="156" height="50" fill="none" stroke="#161513" stroke-width="1"/>
+              <text x="18" y="168" font-family="JetBrains Mono, monospace" font-size="8" fill="#161513">DOC.MOVE → STATE</text>
+              <line x1="18" y1="178" x2="120" y2="178" stroke="#8A8478" stroke-width="2" opacity="0.5"/>
+              <line x1="18" y1="185" x2="90" y2="185" stroke="#8A8478" stroke-width="2" opacity="0.5"/>
+
+              <text x="0" y="222" font-family="JetBrains Mono, monospace" font-size="9" fill="#8A8478">└─ DATA · LOGIKA · UI</text>
+            </g>
+
+            <!-- Bottom: comparison labels -->
+            <text x="130" y="280" font-family="Fraunces, serif" font-size="14" fill="#3A3733" text-anchor="middle" font-style="italic">3 ľudia · 3 miestnosti · 1 dokument</text>
+            <text x="370" y="280" font-family="Fraunces, serif" font-size="14" fill="#3A3733" text-anchor="middle" font-style="italic">3 entity · 3 stavy · 1 prepis</text>
+
+            <!-- Bottom emphasis -->
+            <line x1="60" y1="320" x2="440" y2="320" stroke="#161513" stroke-width="1" opacity="0.2"/>
+            <text x="250" y="360" font-family="Fraunces, serif" font-size="22" fill="#FF3D14" text-anchor="middle" font-style="italic">to isté.</text>
+            <text x="250" y="395" font-family="JetBrains Mono, monospace" font-size="10" fill="#8A8478" text-anchor="middle" letter-spacing="2">LEN INÝ MEDIÁTOR.</text>
+          </svg>
+        </div>
+
+      </div>
+      <div class="transcript"><div class="transcript-inner" data-slide="2"></div></div>
+    </section>
+
+    <!-- ============ SLIDE 3: Decision tree ============ -->
+    <section class="slide" id="slide-3" data-title="Kedy zapínam vibecoding">
+      <div class="slide-num">03</div>
+      <div class="slide-content">
+
+        <div>
+          <div class="eyebrow reveal">Kedy to spustím</div>
+          <h2 class="reveal">Kedy zapnem <em>vibecoding mód.</em></h2>
+        </div>
+
+        <div>
+          <div class="tree" id="tree">
+            <div class="tree-step revealed" data-step="1">
+              <span class="step-num">01</span>
+              <div class="step-body">
+                <strong>Cítim trenie.</strong>
+                <span>Niečo mi chýba, niečo mi nesedí, niečo by som chcel inak.</span>
+              </div>
+              <span class="step-arrow">↓</span>
+            </div>
+
+            <div class="tree-step" data-step="2">
+              <span class="step-num">02</span>
+              <div class="step-body">
+                <strong>Rozprávam sa s Claudom.</strong>
+                <span>Hrám sa na blbého. Pýtam sa hlúpe otázky. Žiadne riešenia mu nevkladám.</span>
+              </div>
+              <span class="step-arrow">↓</span>
+            </div>
+
+            <div class="tree-step" data-step="3">
+              <span class="step-num">03</span>
+              <div class="step-body">
+                <strong>Sadne mi hotové riešenie?</strong>
+                <span>Cena, komplexita, integrácia. Cítim, že to bude OK na prvý raz?</span>
+              </div>
+              <span class="step-arrow">↓</span>
+            </div>
+
+            <div class="tree-step" data-step="4">
+              <span class="step-num">04</span>
+              <div class="step-body">
+                <strong>Vieme si to urobiť sami?</strong>
+                <span>A viem to napojiť na svoj ekosystém? Vlastné appky sa prepájajú ľahšie ako cudzie.</span>
+              </div>
+              <span class="step-arrow">↓</span>
+            </div>
+
+            <div class="tree-step final" data-step="5">
+              <span class="step-num">05</span>
+              <div class="step-body">
+                <strong>→ Analýza · Design · Kód</strong>
+                <span>V tomto poradí. Nikdy naopak.</span>
+              </div>
+              <span class="step-arrow">●</span>
+            </div>
+          </div>
+
+          <div class="tree-cta reveal" id="tree-cta">
+            Klikni na kroky alebo stlač <strong style="color: var(--ink);">↓</strong> · alebo <button onclick="revealAllTreeSteps()">odhaľ všetko naraz</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="transcript"><div class="transcript-inner" data-slide="3"></div></div>
+    </section>
+
+    <!-- ============ SLIDE 4: Rozmieňať na drobné ============ -->
+    <section class="slide" id="slide-4" data-title="Rozmieňať na drobné">
+      <div class="slide-num">04</div>
+      <div class="slide-content">
+
+        <div class="left">
+          <div class="eyebrow reveal">Ako stavám</div>
+          <h2 class="reveal">Rozmením <em>na drobné.</em></h2>
+          <p class="body-text reveal">
+            Agile prístup ku všetkému. Začnem MVP-čkom, ktoré rieši <strong style="color: var(--ink);">jeden konkrétny problém</strong> — a potom sa naň prirodzene nabaľujú ďalšie procesy.
+          </p>
+          <p class="body-text reveal">
+            <strong style="color: var(--ink);">Vlastné appky sa prepájajú jednoducho. Cudzie ťažko.</strong> Preto si staviam vlastný ekosystém.
+          </p>
+        </div>
+
+        <div class="breakdown">
+          <div class="breakdown-row reveal">
+            <div class="breakdown-label">Bolesť — kde to tlačí</div>
+            <div class="breakdown-stage">
+              <div class="block big">Rozpis služieb a&nbsp;jeho kontrola</div>
+            </div>
+          </div>
+
+          <div class="breakdown-arrow reveal" style="font-size: 24px;">↓</div>
+
+          <div class="breakdown-row reveal">
+            <div class="breakdown-label">MVP — najmenší krok, ktorý dáva zmysel</div>
+            <div class="breakdown-stage">
+              <div class="block accent">Dochádzka</div>
+            </div>
+          </div>
+
+          <div class="breakdown-arrow reveal" style="font-size: 24px;">↓</div>
+
+          <div class="breakdown-row reveal">
+            <div class="breakdown-label">Nabaľovanie — ďalšie procesy začnú dávať zmysel</div>
+            <div class="breakdown-stage">
+              <div class="block">Rozpisy</div>
+              <div class="block outline">Výkazy</div>
+              <div class="block">Zmluvy</div>
+              <div class="block outline">Brigád.</div>
+              <div class="block">Chat</div>
+            </div>
+          </div>
+
+          <div class="breakdown-arrow reveal" style="font-size: 24px;">↓</div>
+
+          <div class="breakdown-row reveal">
+            <div class="breakdown-label">Ekosystém — appky sa medzi sebou rozprávajú</div>
+            <div class="breakdown-stage">
+              <div class="block accent">Chobotničiari</div>
+              <span class="breakdown-arrow">⇄</span>
+              <div class="block">Wonderhub</div>
+              <span class="breakdown-arrow">⇄</span>
+              <div class="block">Movie Critic</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="transcript"><div class="transcript-inner" data-slide="4"></div></div>
+    </section>
+
+    <!-- ============ SLIDE 5: Wonderhub ============ -->
+    <section class="slide limitless" id="slide-5" data-title="Limitless">
+      <div class="slide-num">05</div>
+      <div class="slide-content">
+
+        <div class="limitless-grid">
+          <div class="limitless-left">
+            <div class="eyebrow reveal">A toto je emócia</div>
+            <h2 class="reveal limitless-title">Limitless<span class="dot">.</span></h2>
+            <p class="reveal limitless-sub">
+              Vibecoding mi otvoril hlavu. Ako keby som si dal pilulku z&nbsp;filmu Limitless — odrazu je všetko možné.
+            </p>
+
+            <div class="pill-brain reveal">
+              <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+                <!-- Pill (left) -->
+                <g class="pill-grp">
+                  <!-- Pill capsule: orange half + cream half, hand-drawn feel -->
+                  <g transform="translate(50, 130) rotate(-22)">
+                    <!-- Pill body -->
+                    <rect x="-55" y="-22" width="110" height="44" rx="22" ry="22"
+                          fill="none" stroke="#F2EEE5" stroke-width="1.8"/>
+                    <!-- Orange half -->
+                    <path d="M -55 0 Q -55 -22 -33 -22 L 0 -22 L 0 22 L -33 22 Q -55 22 -55 0 Z"
+                          fill="#FF3D14" opacity="0.85"/>
+                    <!-- Divider -->
+                    <line x1="0" y1="-22" x2="0" y2="22" stroke="#F2EEE5" stroke-width="1.5"/>
+                    <!-- Highlight on orange half -->
+                    <ellipse cx="-25" cy="-10" rx="14" ry="3" fill="#F2EEE5" opacity="0.25"/>
+                    <!-- Sparkle next to pill -->
+                    <g transform="translate(-78, -38)" stroke="#FF3D14" stroke-width="1.5" fill="none">
+                      <line x1="0" y1="-8" x2="0" y2="8"/>
+                      <line x1="-8" y1="0" x2="8" y2="0"/>
+                    </g>
+                    <g transform="translate(50, 32)" stroke="#F2EEE5" stroke-width="1.2" fill="none" opacity="0.5">
+                      <line x1="0" y1="-5" x2="0" y2="5"/>
+                      <line x1="-5" y1="0" x2="5" y2="0"/>
+                    </g>
+                  </g>
+
+                  <!-- Energy arrow toward brain -->
+                  <g class="energy-arrow" stroke="#FF3D14" stroke-width="1.5" fill="none" stroke-linecap="round">
+                    <path d="M 130 130 Q 175 110 215 125" stroke-dasharray="3 4"/>
+                    <polyline points="208,118 218,126 209,134"/>
+                  </g>
+                </g>
+
+                <!-- Brain (right) -->
+                <g class="brain-grp" transform="translate(300, 130)">
+                  <!-- Outer brain contour -->
+                  <path d="
+                    M -55 -10
+                    Q -65 -45 -30 -55
+                    Q -15 -75 10 -68
+                    Q 35 -78 55 -55
+                    Q 75 -50 70 -20
+                    Q 80 5 60 25
+                    Q 65 50 35 55
+                    Q 15 70 -15 60
+                    Q -45 65 -55 40
+                    Q -75 25 -65 5
+                    Q -72 -2 -55 -10 Z"
+                    fill="none" stroke="#F2EEE5" stroke-width="2" stroke-linejoin="round"/>
+
+                  <!-- Brain hemisphere divider -->
+                  <path d="M 0 -68 Q 5 -40 -2 -10 Q 8 10 0 35 Q -6 50 2 62"
+                        fill="none" stroke="#F2EEE5" stroke-width="1.3" opacity="0.6"/>
+
+                  <!-- Brain folds (gyri) - left side -->
+                  <path d="M -45 -30 Q -30 -25 -25 -10" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+                  <path d="M -55 5 Q -35 0 -20 15" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+                  <path d="M -45 30 Q -25 32 -15 45" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+                  <path d="M -30 -50 Q -22 -38 -15 -32" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+
+                  <!-- Brain folds - right side -->
+                  <path d="M 15 -55 Q 25 -42 30 -28" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+                  <path d="M 25 -15 Q 40 -10 55 -20" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+                  <path d="M 20 10 Q 38 8 55 18" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+                  <path d="M 10 35 Q 25 38 38 45" fill="none" stroke="#F2EEE5" stroke-width="1" opacity="0.5"/>
+
+                  <!-- Activated synapse dots (orange = unlocked) -->
+                  <circle cx="-25" cy="-18" r="2.5" fill="#FF3D14" class="synapse s1"/>
+                  <circle cx="20" cy="-25" r="2.5" fill="#FF3D14" class="synapse s2"/>
+                  <circle cx="30" cy="20" r="2.5" fill="#FF3D14" class="synapse s3"/>
+                  <circle cx="-30" cy="25" r="2.5" fill="#FF3D14" class="synapse s4"/>
+                  <circle cx="0" cy="0" r="2.5" fill="#FF3D14" class="synapse s5"/>
+
+                  <!-- Glow lines emanating outward (the "100% unlocked" effect) -->
+                  <g class="brain-glow" stroke="#FF3D14" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.6">
+                    <line x1="-75" y1="-65" x2="-65" y2="-50"/>
+                    <line x1="0" y1="-90" x2="0" y2="-78"/>
+                    <line x1="75" y1="-65" x2="65" y2="-50"/>
+                    <line x1="90" y1="0" x2="78" y2="0"/>
+                    <line x1="75" y1="65" x2="65" y2="50"/>
+                    <line x1="-90" y1="0" x2="-78" y2="0"/>
+                    <line x1="-75" y1="65" x2="-65" y2="50"/>
+                    <line x1="0" y1="85" x2="0" y2="73"/>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <div class="limitless-right">
+            <div class="manifest reveal">
+              <div class="manifest-line">
+                <span class="manifest-num">01</span>
+                <span class="manifest-text"><em>AI first.</em> Nad čímkoľvek premýšľam, dívam sa cez Limitless okuliare.</span>
+              </div>
+              <div class="manifest-line">
+                <span class="manifest-num">02</span>
+                <span class="manifest-text">Nehovorím si „to už určite existuje". <strong>A&nbsp;čo? Nemám to ja.</strong></span>
+              </div>
+              <div class="manifest-line">
+                <span class="manifest-num">03</span>
+                <span class="manifest-text">O šialených nápadoch sa porozprávam s&nbsp;Claudom. <em>Ako na&nbsp;to? Čo dokážeme?</em></span>
+              </div>
+              <div class="manifest-line">
+                <span class="manifest-num">04</span>
+                <span class="manifest-text">Poďme si urobiť UI, nech to vidím. Všetko prečítam, všetko nasajem.</span>
+              </div>
+            </div>
+
+            <div class="limitless-tags reveal">
+              <span class="tag-pill">Zvedavosť</span>
+              <span class="tag-pill">Túžba</span>
+              <span class="tag-pill accent">Limitless</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="transcript"><div class="transcript-inner" data-slide="5"></div></div>
+    </section>
+
+    <!-- ============ SLIDE 6: Čo tvoriť, keď môžete všetko ============ -->
+    <section class="slide grid-finale" id="slide-6" data-title="Čo tvoriť, keď môžete všetko?">
+      <div class="slide-num">06</div>
+      <div class="slide-content">
+
+        <div class="finale-grid">
+
+          <div class="finale-header">
+            <h2 class="reveal finale-title">
+              Do čoho sa pustíte,<br>
+              keď môžete <span class="it">čokoľvek?</span>
+            </h2>
+            <p class="reveal finale-lead">
+              Toto sú appky, ktoré som postavil a stále používam.<br>
+              <span class="finale-meta">Sám. Bez programátora. Bez tímu.</span>
+            </p>
+          </div>
+
+          <div class="apps-grid reveal">
+            <div class="app-tile featured">
+              <span class="app-cat">CRM</span>
+              <span class="app-name">Chobotničiari</span>
+              <span class="app-desc">Stereo kino · 100+ ľudí</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">CRM</span>
+              <span class="app-name">Kompas</span>
+              <span class="app-desc">Túlavé kino · 3 krajiny</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Web</span>
+              <span class="app-name">Weby + rezervácie</span>
+              <span class="app-desc">Túlavé kino · 3 krajiny</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Agent</span>
+              <span class="app-name">Movie Critic</span>
+              <span class="app-desc">Zber + hodnotenie filmov</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Agent</span>
+              <span class="app-name">Market Analyzer</span>
+              <span class="app-desc">Vhodné regióny pre kino</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Agent</span>
+              <span class="app-name">Business Analyzer</span>
+              <span class="app-desc">Hodnotenie konkurencie</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Tool</span>
+              <span class="app-name">Web Tracker</span>
+              <span class="app-desc">Vlastný · so super mapou</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Tool</span>
+              <span class="app-name">Štatistika</span>
+              <span class="app-desc">Stereo kino</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Scraper</span>
+              <span class="app-name">Predaje konkurencie</span>
+              <span class="app-desc">Automatický zber</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">App</span>
+              <span class="app-name">Chat</span>
+              <span class="app-desc">Vlastná chatovacia appka</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Auto</span>
+              <span class="app-name">Fakturácia</span>
+              <span class="app-desc">Automatická</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Auto</span>
+              <span class="app-name">Emaily + Newsletter</span>
+              <span class="app-desc">Sendgrid · vlastný editor</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">HR</span>
+              <span class="app-name">Mzdy + Dokumenty</span>
+              <span class="app-desc">Ekonomický modul</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Tool</span>
+              <span class="app-name">Checklisty + Procesy</span>
+              <span class="app-desc">Generátor</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">HR</span>
+              <span class="app-name">Hiring</span>
+              <span class="app-desc">Formuláre + AI</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Game</span>
+              <span class="app-name">Americký Žolík</span>
+              <span class="app-desc">Karetná hra</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">Edu</span>
+              <span class="app-name">Edukačná hra</span>
+              <span class="app-desc">Pre mladých podnikateľov</span>
+            </div>
+            <div class="app-tile more">
+              <span class="app-cat">+</span>
+              <span class="app-name">a&nbsp;ďalšie…</span>
+              <span class="app-desc">Tie, čo som zahodil, sa nepočítajú</span>
+            </div>
+          </div>
+
+          <div class="finale-footer reveal">
+            <p class="finale-closing">
+              <strong>Neviem programovať,<br>ale viem myslieť.</strong>
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+      <div class="transcript"><div class="transcript-inner" data-slide="6"></div></div>
+    </section>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+
+    <div class="audio-wrap">
+      <button class="audio-btn" id="audio-btn" onclick="toggleAudio()">
+        <svg id="audio-icon" viewBox="0 0 16 16"><path d="M3 2 L13 8 L3 14 Z"/></svg>
+      </button>
+      <div class="audio-info">
+        <div class="audio-info-line">
+          <span class="audio-status" id="audio-status">Slide 01 · klikni ▶ pre prehratie</span>
+          <span class="audio-time" id="audio-time">0:00 / 0:00</span>
+        </div>
+        <div class="waveform" id="waveform"></div>
+      </div>
+    </div>
+
+    <label class="upload-label">
+      ↑ Audio
+      <input type="file" accept="audio/*" id="audio-upload" onchange="handleAudioUpload(event)">
+    </label>
+
+    <div class="dots" id="dots"></div>
+
+    <div class="nav-controls">
+      <span class="slide-counter"><strong id="current-slide">01</strong> / <span id="total-slides">07</span></span>
+      <button class="nav-btn" id="prev-btn" onclick="prevSlide()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 12 L6 8 L10 4"/></svg>
+      </button>
+      <button class="nav-btn" id="next-btn" onclick="nextSlide()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4 L10 8 L6 12"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Hidden audio element -->
+<audio id="audio-player" preload="metadata"></audio>
+
+<script>
+  // ===========================================================
+  // STATE
+  // ===========================================================
+  const totalSlides = 6;
+  let currentSlide = 1;
+  const visited = new Set([1]);
+
+  // ===========================================================
+  // INIT
+  // ===========================================================
+  document.getElementById('total-slides').textContent = String(totalSlides).padStart(2, '0');
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 1; i <= totalSlides; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'dot';
+    if (i === 1) dot.classList.add('active');
+    dot.title = `Slide ${i}`;
+    dot.onclick = () => goToSlide(i);
+    dotsEl.appendChild(dot);
+  }
+
+  // Build waveform bars
+  const waveform = document.getElementById('waveform');
+  const BARS = 60;
+  for (let i = 0; i < BARS; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    bar.style.height = (Math.sin(i * 0.4) * 0.4 + 0.5) * 14 + 'px';
+    waveform.appendChild(bar);
+  }
+
+  // Hash routing
+  function readHash() {
+    const m = window.location.hash.match(/slide-(\d+)/);
+    if (m) {
+      const n = parseInt(m[1]);
+      if (n >= 1 && n <= totalSlides) goToSlide(n, false);
+    }
+  }
+  window.addEventListener('hashchange', readHash);
+  readHash();
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    else if (e.key === 'ArrowDown' && currentSlide === 3) {
+      e.preventDefault();
+      revealNextTreeStep();
+    }
+    else if (/^[1-6]$/.test(e.key)) goToSlide(parseInt(e.key));
+  });
+
+  // ===========================================================
+  // NAVIGATION
+  // ===========================================================
+  function goToSlide(n, updateHash = true) {
+    if (n < 1 || n > totalSlides) return;
+
+    document.querySelector(`#slide-${currentSlide}`).classList.remove('active');
+    document.querySelector(`#slide-${n}`).classList.add('active');
+
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.remove('active');
+      if (i + 1 === n) d.classList.add('active');
+      else if (visited.has(i + 1)) d.classList.add('visited');
+    });
+
+    currentSlide = n;
+    visited.add(n);
+    document.getElementById('current-slide').textContent = String(n).padStart(2, '0');
+    document.getElementById('prev-btn').disabled = n === 1;
+    document.getElementById('next-btn').disabled = n === totalSlides;
+
+    if (updateHash) {
+      history.replaceState(null, '', `#slide-${n}`);
+    }
+
+    // Pause audio when changing slides (so each slide is its own segment)
+    pauseAudio();
+
+    // Reset tree on slide 3 entry — keep first revealed
+    if (n === 3) {
+      // already revealed by default
+    }
+  }
+
+  function nextSlide() { goToSlide(currentSlide + 1); }
+  function prevSlide() { goToSlide(currentSlide - 1); }
+
+  // ===========================================================
+  // TREE INTERACTION (Slide 3)
+  // ===========================================================
+  document.querySelectorAll('.tree-step').forEach((step, idx) => {
+    step.addEventListener('click', () => {
+      step.classList.add('revealed');
+      // Reveal next as well for momentum
+      const next = step.nextElementSibling;
+      if (next && next.classList.contains('tree-step')) {
+        next.classList.add('revealed');
+      }
+    });
+  });
+
+  function revealNextTreeStep() {
+    const steps = document.querySelectorAll('#tree .tree-step');
+    for (const s of steps) {
+      if (!s.classList.contains('revealed')) {
+        s.classList.add('revealed');
+        return;
+      }
+    }
+  }
+
+  function revealAllTreeSteps() {
+    document.querySelectorAll('#tree .tree-step').forEach(s => s.classList.add('revealed'));
+  }
+
+  // ===========================================================
+  // AUDIO
+  // ===========================================================
+  const audioPlayer = document.getElementById('audio-player');
+  const audioBtn = document.getElementById('audio-btn');
+  const audioIcon = document.getElementById('audio-icon');
+  const audioStatus = document.getElementById('audio-status');
+  const audioTime = document.getElementById('audio-time');
+
+  // Per-slide audio — pre-mapped files in /audio
+  const slideAudio = {
+    1: { url: 'audio/1.mp3', name: 'slide-01.mp3' },
+    2: { url: 'audio/2.mp3', name: 'slide-02.mp3' },
+    3: { url: 'audio/3.mp3', name: 'slide-03.mp3' },
+    4: { url: 'audio/4.mp3', name: 'slide-04.mp3' },
+    5: { url: 'audio/5.mp3', name: 'slide-05.mp3' },
+    6: { url: 'audio/6.mp3', name: 'slide-06.mp3' },
+  };
+
+  // User-gesture flag — once true, future slide changes attempt autoplay.
+  let userHasInteracted = false;
+  ['click','keydown','touchstart'].forEach(ev =>
+    window.addEventListener(ev, () => { userHasInteracted = true; }, { once: true })
+  );
+
+  function handleAudioUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    slideAudio[currentSlide] = { url, name: file.name };
+    loadAudioForCurrentSlide();
+    audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · ${file.name}`;
+  }
+
+  function loadAudioForCurrentSlide() {
+    pauseAudio();
+    const entry = slideAudio[currentSlide];
+    if (entry) {
+      audioPlayer.src = entry.url;
+      audioBtn.disabled = false;
+      audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · ${entry.name}`;
+      if (userHasInteracted) {
+        const p = audioPlayer.play();
+        if (p && typeof p.then === 'function') {
+          p.then(() => {
+            audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
+          }).catch(() => {
+            audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
+          });
+        }
+      } else {
+        audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
+      }
+    } else {
+      audioPlayer.removeAttribute('src');
+      audioBtn.disabled = true;
+      audioStatus.textContent = 'Bez audia';
+      audioTime.textContent = '0:00 / 0:00';
+      resetWaveform();
+    }
+  }
+
+  function toggleAudio() {
+    if (!audioPlayer.src) return;
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
+    } else {
+      pauseAudio();
+    }
+  }
+
+  function pauseAudio() {
+    if (!audioPlayer.paused) audioPlayer.pause();
+    audioIcon.innerHTML = '<path d="M3 2 L13 8 L3 14 Z"/>';
+  }
+
+  function fmt(s) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${String(sec).padStart(2,'0')}`;
+  }
+
+  audioPlayer.addEventListener('timeupdate', () => {
+    audioTime.textContent = `${fmt(audioPlayer.currentTime)} / ${fmt(audioPlayer.duration)}`;
+    const pct = audioPlayer.currentTime / (audioPlayer.duration || 1);
+    const bars = waveform.children;
+    for (let i = 0; i < bars.length; i++) {
+      bars[i].classList.toggle('played', i / bars.length < pct);
+    }
+  });
+
+  audioPlayer.addEventListener('ended', () => {
+    pauseAudio();
+  });
+
+  function resetWaveform() {
+    Array.from(waveform.children).forEach(b => b.classList.remove('played'));
+  }
+
+  // Re-load audio when slide changes
+  const origGoToSlide = goToSlide;
+  goToSlide = function(n, updateHash) {
+    origGoToSlide(n, updateHash);
+    loadAudioForCurrentSlide();
+    resetTranscript(n);
+  };
+
+  // ===========================================================
+  // TRANSCRIPTS — návrh textu pre každý slide
+  // Uprav text podľa toho, čo presne nahováraš.
+  // Slová sa zvýrazňujú proporcionálne k dĺžke audia.
+  // ===========================================================
+  const transcripts = {
+    1: "Volám sa Maroš a chcem vám za päť minút povedať, ako premýšľam, keď robím vibecoding. Nebude to o nástrojoch ani o tutoriáloch. Bude to o hlave. Lebo celé je to o hlave a mojich skilloch.",
+
+    2: "Ja dokážem premýšľať v aplikáciách. Predstavím si fyzický proces ako 3D hru na počítači. Postavičky niekam chodia, niečo robia, niečo si podávajú, niekto na niečo čaká. To isté sa deje v aplikácii. Len si to nemusím vizualizovať — stačí mi to v hlave. Lebo veď čo iné aplikácia vlastne je? Rozmenený proces. Užívateľ klikne, niekde sa to zapíše, niekto iný to vidí. To isté, ako keď si ľudia v kancelárii podajú papier. Len medzi tým je obrazovka. Keď to človek takto začne vidieť, odrazu vie každý proces okolo seba premeniť na appku. A v tom je celá tá sila.",
+
+    3: "Vibecoding mód nezapínam stále. Zapínam ho len vtedy, keď cítim trenie. Niečo mi chýba, niečo mi nesedí, niečo by som chcel inak. Vtedy to začne. Najprv sa pýtam, či už nejaké hotové riešenie existuje. Rozprávam sa s Claudom. Hrám sa na blbého. Pýtam sa správne hlúpe otázky. Nevkladám mu žiadne riešenia. Lebo niekedy zistím, že na to už appka existuje a stačí ju použiť. Ale potom si poviem — sadne mi to? Cena, komplexita, integrácia. Cítim, že to bude OK na prvý raz? Ak nie, tak sa pýtam ďalej: vieme si to urobiť sami? A — toto je extrémne dôležité — viem to napojiť na svoj ekosystém appiek? Lebo prepojiť vlastné appky je oveľa ľahšie ako cudzie. Ak je odpoveď áno, idem najprv analyzovať, potom chcem design a ideme kódiť.",
+
+    4: "Toto je možno najdôležitejšie. Som nútený rozmeniť proces na drobné. Inak to nejde. Ak sa pokúsim spraviť veľkú vec naraz, väčšinou mi to nejde. Používam Agile prístup ku všetkému. S týmto vieme s Claudom rýchlo nasadiť MVP. Takto som vytvoril appku Chobotničiari pre Stereo kino. Najviac ma trápil rozpis služieb a jeho kontrola. Ako na to? Cez dochádzku. A keď už bola dochádzka, tak postupne sa začali ponúkať ďalšie procesy, ktoré sme do toho povkladali. Proste zapojiť ich dávalo zmysel. Každá malá vec funguje sama, zbiera dáta, a popri tom sa skladá do väčšieho celku. A toto je celé tajomstvo: vlastné appky sa medzi sebou prepájajú jednoducho. Cudzie ťažko. Preto si stavám vlastný ekosystém — kde každá nová appka má hodnotu sama o sebe, ale dohromady tvoria niečo, čo nikto iný nemá. S vibecodingom je to reálne.",
+
+    5: "A toto je už emócia. Vibecoding mi dal pocit, že dokážem čokoľvek. Prirovnávam to k filmu Limitless — hlavný hrdina si dá pilulku a tá mu otvorí stovku percent mozgovej kapacity. Presne takýto pocit mám. Odrazu je všetko možné. AI first. Nad čímkoľvek premýšľam, dívam sa na to cez Limitless okuliare. Nehovorím si: to je blbosť, to už určite existuje. A čo, že existuje? Nemám to ja. A keďže ma to zároveň brutálne baví, o šialených nápadoch sa vždy porozprávam s Claudom. Ako na to? Čo dokážeme? Poďme si urobiť UI, nech to vidím. Všetko prečítam, všetko nasajem, všetko chcem vedieť. Zvedavosť. Túžba. Limitless.",
+
+    6: "Čo teda tvoriť, keď môžete všetko? Neviem ako a prečo, ale nápady sa mi vynárajú samé od seba. Vždy, keď niečo riešim alebo mám nejakú potrebu, rovno premýšľam v aplikáciách. Vidím to v hlave jasné ako facka. Som veľmi kreatívny človek a toto ma uspokojuje. Baví ma to. Niekedy je to aj výzva. Tu je zopár appiek, ktoré som urobil a stále používam. Chobotničiari, CRM pre Stereo kino, používa ho stovka ľudí. Kompas, CRM pre Túlavé kino v troch krajinách. Štatistika pre Stereo. Scrapovanie predajov konkurencie. Movie Critic. Market Analyzer. Web Tracker s vlastnou mapou. Business Analyzer. Weby pre Túlavé kino. Vlastná chatovacia appka. Automatická fakturácia. Transakčné emaily a newslettre. Ekonomický modul. Generátor checklistov. Hiring aplikácia. Hra Americký Žolík. Edukačná hra pre mladých podnikateľov. A ďalšie. A teraz otázka pre vás: do čoho sa pustíte, keď môžete čokoľvek? Neviem programovať, ale viem myslieť."
+  };
+
+  // Build word spans for each transcript
+  function buildTranscript(slideNum) {
+    const el = document.querySelector(`.transcript-inner[data-slide="${slideNum}"]`);
+    if (!el || el.dataset.built === 'true') return;
+    const text = transcripts[slideNum] || '';
+    const words = text.split(/(\s+)/);
+    el.innerHTML = words.map(w => {
+      if (/^\s+$/.test(w)) return w;
+      return `<span class="word">${w}</span>`;
+    }).join('');
+    el.dataset.built = 'true';
+  }
+
+  for (let i = 1; i <= totalSlides; i++) buildTranscript(i);
+
+  // Sync transcript with audio playback
+  function updateTranscript() {
+    if (audioPlayer.paused || !audioPlayer.duration) return;
+
+    const el = document.querySelector(`.transcript-inner[data-slide="${currentSlide}"]`);
+    if (!el) return;
+
+    const words = el.querySelectorAll('.word');
+    if (!words.length) return;
+
+    const pct = audioPlayer.currentTime / audioPlayer.duration;
+    const currentIdx = Math.floor(pct * words.length);
+
+    words.forEach((w, i) => {
+      w.classList.remove('current', 'spoken');
+      if (i < currentIdx) w.classList.add('spoken');
+      else if (i === currentIdx) w.classList.add('current');
+    });
+
+    // Auto-scroll the transcript so the current word stays visible
+    const currentEl = el.querySelector('.word.current');
+    if (currentEl) {
+      const containerRect = el.parentElement.getBoundingClientRect();
+      const wordRect = currentEl.getBoundingClientRect();
+      const offset = wordRect.top - containerRect.top - 20;
+      if (offset > 0) {
+        const currentTransform = parseFloat(el.style.getPropertyValue('--scroll') || 0);
+        el.style.transform = `translateY(-${currentTransform + offset}px)`;
+        el.style.setProperty('--scroll', currentTransform + offset);
+      }
+    }
+  }
+
+  // Reset transcript scroll/highlights when audio resets or slide changes
+  function resetTranscript(slideNum) {
+    const el = document.querySelector(`.transcript-inner[data-slide="${slideNum}"]`);
+    if (!el) return;
+    el.style.transform = 'translateY(0)';
+    el.style.setProperty('--scroll', 0);
+    el.querySelectorAll('.word').forEach(w => w.classList.remove('current', 'spoken'));
+  }
+
+  audioPlayer.addEventListener('timeupdate', updateTranscript);
+  audioPlayer.addEventListener('seeked', () => {
+    resetTranscript(currentSlide);
+    updateTranscript();
+  });
+
+  // ===========================================================
+  // HELP
+  // ===========================================================
+  function toggleHelp() {
+    alert(
+      'NAVIGÁCIA\n\n' +
+      '→ alebo medzerník  · ďalší slide\n' +
+      '←                  · späť\n' +
+      '1–6                · skok na slide\n' +
+      '↓ (na slide 3)     · odhaľ ďalší krok\n\n' +
+      'AUDIO\n\n' +
+      'Audio sa spúšťa automaticky pri prechode na ďalší slide.\n' +
+      'Prvý slide treba odštartovať kliknutím na ▶.'
+    );
+  }
+
+  // Init
+  loadAudioForCurrentSlide();
+</script>
+</body>
+</html>
