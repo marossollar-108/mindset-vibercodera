@@ -2157,6 +2157,12 @@
 
   audioPlayer.addEventListener('ended', () => {
     pauseAudio();
+    if (currentSlide < totalSlides) {
+      const slideAtEnd = currentSlide;
+      setTimeout(() => {
+        if (currentSlide === slideAtEnd) nextSlide();
+      }, 2000);
+    }
   });
 
   function resetWaveform() {
