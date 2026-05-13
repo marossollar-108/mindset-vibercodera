@@ -1312,7 +1312,7 @@
     bottom: 88px;
     right: 32px;
     z-index: 6;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     gap: 10px;
@@ -1321,6 +1321,7 @@
     border: 1px solid var(--ink);
     pointer-events: none;
   }
+  body[data-slide="6"] .qr-widget { display: flex; }
   .qr-widget::before {
     content: 'SKEN · OPEN';
     position: absolute;
@@ -1352,23 +1353,8 @@
     color: var(--ink);
     font-weight: 500;
   }
-  /* Dark adaptation on the limitless slide */
-  body.on-limitless .qr-widget {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.25);
-  }
-  body.on-limitless .qr-widget::before {
-    background: var(--ink);
-    color: rgba(255, 255, 255, 0.4);
-  }
-  body.on-limitless .qr-widget .qr-caption {
-    color: rgba(255, 255, 255, 0.7);
-  }
-  body.on-limitless .qr-widget .qr-caption strong {
-    color: #fff;
-  }
   @media (max-width: 900px) {
-    .qr-widget { display: none; }
+    body[data-slide="6"] .qr-widget { display: none; }
   }
 
   /* ================================================================
@@ -2118,6 +2104,7 @@
     currentSlide = n;
     visited.add(n);
     document.body.classList.toggle('on-limitless', n === 5);
+    document.body.dataset.slide = String(n);
     document.getElementById('current-slide').textContent = String(n).padStart(2, '0');
     document.getElementById('prev-btn').disabled = n === 1;
     document.getElementById('next-btn').disabled = n === totalSlides;
