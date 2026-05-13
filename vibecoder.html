@@ -2087,8 +2087,15 @@
   const audioStatus = document.getElementById('audio-status');
   const audioTime = document.getElementById('audio-time');
 
-  // Per-slide audio (object URLs go here when uploaded)
-  const slideAudio = {};
+  // Per-slide audio — pre-mapped, upload prepíše konkrétny slide
+  const slideAudio = {
+    1: { url: 'audio/1.mp3', name: 'slide-01.mp3' },
+    2: { url: 'audio/2.mp3', name: 'slide-02.mp3' },
+    3: { url: 'audio/3.mp3', name: 'slide-03.mp3' },
+    4: { url: 'audio/4.mp3', name: 'slide-04.mp3' },
+    5: { url: 'audio/5.mp3', name: 'slide-05.mp3' },
+    6: { url: 'audio/6.mp3', name: 'slide-06.mp3' },
+  };
 
   function handleAudioUpload(e) {
     const file = e.target.files[0];
