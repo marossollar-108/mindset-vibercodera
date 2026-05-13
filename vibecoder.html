@@ -473,7 +473,8 @@
     padding: 18px 24px;
     background: var(--paper-2);
     border-left: 3px solid var(--ink);
-    cursor: pointer;
+    cursor: default;
+    pointer-events: none;
     transition: all 0.3s;
     position: relative;
     opacity: 0.4;
@@ -1567,7 +1568,7 @@
             </div>
           </div>
 
-          <div class="tree-cta reveal" id="tree-cta">
+          <div class="tree-cta reveal" id="tree-cta" style="display:none;">
             Klikni na kroky alebo stlač <strong style="color: var(--ink);">↓</strong> · alebo <button onclick="revealAllTreeSteps()">odhaľ všetko naraz</button>
           </div>
         </div>
@@ -2175,6 +2176,7 @@
     origGoToSlide(n, updateHash);
     loadAudioForCurrentSlide();
     resetTranscript(n);
+    if (n === 3) resetTreeSteps();
   };
 
   // ===========================================================
@@ -2253,7 +2255,23 @@
     el.querySelectorAll('.word').forEach(w => w.classList.remove('current', 'spoken'));
   }
 
+  // Auto-reveal tree steps in sync with slide-3 audio
+  function resetTreeSteps() {
+    const steps = document.querySelectorAll('#tree .tree-step');
+    steps.forEach((s, i) => s.classList.toggle('revealed', i === 0));
+  }
+  function updateTreeSteps() {
+    if (currentSlide !== 3) return;
+    if (!audioPlayer.duration || !isFinite(audioPlayer.duration)) return;
+    const steps = document.querySelectorAll('#tree .tree-step');
+    const ratio = audioPlayer.currentTime / audioPlayer.duration;
+    steps.forEach((s, i) => {
+      if (i === 0 || ratio >= i / steps.length) s.classList.add('revealed');
+    });
+  }
+
   audioPlayer.addEventListener('timeupdate', updateTranscript);
+  audioPlayer.addEventListener('timeupdate', updateTreeSteps);
   audioPlayer.addEventListener('seeked', () => {
     resetTranscript(currentSlide);
     updateTranscript();
