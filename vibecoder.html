@@ -185,23 +185,7 @@
   }
   .wave-bar.played { background: var(--accent); }
 
-  .upload-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-mute);
-    cursor: pointer;
-    padding: 4px 10px;
-    border: 1px dashed var(--ink-mute);
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-  .upload-label:hover { color: var(--accent); border-color: var(--accent); }
-  .upload-label input { display: none; }
+  .upload-label { display: none; }
 
   /* Nav controls */
   .nav-controls {
@@ -1920,12 +1904,12 @@
   <div class="bottombar">
 
     <div class="audio-wrap">
-      <button class="audio-btn" id="audio-btn" onclick="toggleAudio()" disabled>
+      <button class="audio-btn" id="audio-btn" onclick="toggleAudio()">
         <svg id="audio-icon" viewBox="0 0 16 16"><path d="M3 2 L13 8 L3 14 Z"/></svg>
       </button>
       <div class="audio-info">
         <div class="audio-info-line">
-          <span class="audio-status" id="audio-status">Bez audia · klikni na Upload</span>
+          <span class="audio-status" id="audio-status">Slide 01 · klikni ▶ pre prehratie</span>
           <span class="audio-time" id="audio-time">0:00 / 0:00</span>
         </div>
         <div class="waveform" id="waveform"></div>
@@ -2087,7 +2071,7 @@
   const audioStatus = document.getElementById('audio-status');
   const audioTime = document.getElementById('audio-time');
 
-  // Per-slide audio — pre-mapped, upload prepíše konkrétny slide
+  // Per-slide audio — pre-mapped files in /audio
   const slideAudio = {
     1: { url: 'audio/1.mp3', name: 'slide-01.mp3' },
     2: { url: 'audio/2.mp3', name: 'slide-02.mp3' },
@@ -2096,6 +2080,12 @@
     5: { url: 'audio/5.mp3', name: 'slide-05.mp3' },
     6: { url: 'audio/6.mp3', name: 'slide-06.mp3' },
   };
+
+  // User-gesture flag — once true, future slide changes attempt autoplay.
+  let userHasInteracted = false;
+  ['click','keydown','touchstart'].forEach(ev =>
+    window.addEventListener(ev, () => { userHasInteracted = true; }, { once: true })
+  );
 
   function handleAudioUpload(e) {
     const file = e.target.files[0];
@@ -2107,15 +2097,28 @@
   }
 
   function loadAudioForCurrentSlide() {
+    pauseAudio();
     const entry = slideAudio[currentSlide];
     if (entry) {
       audioPlayer.src = entry.url;
       audioBtn.disabled = false;
       audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · ${entry.name}`;
+      if (userHasInteracted) {
+        const p = audioPlayer.play();
+        if (p && typeof p.then === 'function') {
+          p.then(() => {
+            audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
+          }).catch(() => {
+            audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
+          });
+        }
+      } else {
+        audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
+      }
     } else {
       audioPlayer.removeAttribute('src');
       audioBtn.disabled = true;
-      audioStatus.textContent = 'Bez audia · klikni na Upload';
+      audioStatus.textContent = 'Bez audia';
       audioTime.textContent = '0:00 / 0:00';
       resetWaveform();
     }
@@ -2261,8 +2264,8 @@
       '1–6                · skok na slide\n' +
       '↓ (na slide 3)     · odhaľ ďalší krok\n\n' +
       'AUDIO\n\n' +
-      'Klikni na "↑ Audio" v dolnej lište a nahraj zvuk pre aktuálny slide.\n' +
-      'Každý slide má vlastné audio. Pri prepnutí sa zastaví.'
+      'Audio sa spúšťa automaticky pri prechode na ďalší slide.\n' +
+      'Prvý slide treba odštartovať kliknutím na ▶.'
     );
   }
 
