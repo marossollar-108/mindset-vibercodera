@@ -879,7 +879,12 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 8px;
-    align-content: center;
+    align-content: start;
+    align-self: start;
+    padding-right: clamp(0px, 24vw, 360px);
+  }
+  @media (max-width: 900px) {
+    .apps-grid { padding-right: 0; }
   }
 
   .app-tile {
@@ -1330,18 +1335,18 @@
   }
   .qr-widget img {
     display: block;
-    width: clamp(120px, 10vw, 160px);
+    width: clamp(240px, 20vw, 320px);
     height: auto;
     image-rendering: pixelated;
   }
   .qr-widget .qr-caption {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 0.04em;
     color: var(--ink-soft);
     text-align: center;
     line-height: 1.4;
-    max-width: 160px;
+    max-width: 320px;
   }
   .qr-widget .qr-caption strong {
     color: var(--ink);
@@ -1953,6 +1958,21 @@
               <span class="app-cat">Edu</span>
               <span class="app-name">Edukačná hra</span>
               <span class="app-desc">Pre mladých podnikateľov</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">CRM</span>
+              <span class="app-name">MiniKompas</span>
+              <span class="app-desc">Pre túlavých premietačov</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">BI</span>
+              <span class="app-name">Dashboardy</span>
+              <span class="app-desc">Live prehľady všetkých firiem</span>
+            </div>
+            <div class="app-tile">
+              <span class="app-cat">IoT</span>
+              <span class="app-name">PostMix váhy</span>
+              <span class="app-desc">Meranie hmotnosti sirupov</span>
             </div>
             <div class="app-tile more">
               <span class="app-cat">+</span>
