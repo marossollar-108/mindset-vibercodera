@@ -649,6 +649,58 @@
     flex-direction: column;
   }
 
+  /* Slide 4 progressive reveal */
+  .b-step {
+    opacity: 0.18;
+    transform: translateY(6px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .b-step.b-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .b-loop {
+    color: var(--accent) !important;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .b-step.b-loop.b-revealed {
+    animation: bloopSpin 1.6s ease-in-out infinite;
+  }
+  @keyframes bloopSpin {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-360deg); }
+  }
+  .prons-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+  }
+  .prons-list {
+    list-style: none;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+  }
+  .prons-list li {
+    padding: 3px 0;
+  }
+  .prons-list li::before {
+    content: '· ';
+    color: var(--ink-mute);
+  }
+  .prons-list small {
+    color: var(--ink-mute);
+    font-size: 12px;
+    font-style: italic;
+    font-family: 'Inter Tight', sans-serif;
+  }
+
   /* ================================================================
      SLIDE 5 — LIMITLESS (inverted, cinematic)
      ================================================================ */
@@ -1625,46 +1677,72 @@
           </p>
         </div>
 
-        <div class="breakdown">
-          <div class="breakdown-row reveal">
-            <div class="breakdown-label">Bolesť — kde to tlačí</div>
+        <div class="breakdown" id="slide4-flow">
+          <div class="breakdown-row b-step">
+            <div class="breakdown-label">Vstup</div>
             <div class="breakdown-stage">
-              <div class="block big">Rozpis služieb a&nbsp;jeho kontrola</div>
+              <div class="block outline">Nápad</div>
+              <span class="breakdown-arrow">+</span>
+              <div class="block outline">Analýza</div>
+              <span class="breakdown-arrow">+</span>
+              <div class="block outline">Design</div>
             </div>
           </div>
 
-          <div class="breakdown-arrow reveal" style="font-size: 24px;">↓</div>
+          <div class="breakdown-arrow b-step" style="font-size: 24px;">↓</div>
 
-          <div class="breakdown-row reveal">
-            <div class="breakdown-label">MVP — najmenší krok, ktorý dáva zmysel</div>
+          <div class="breakdown-row b-step">
+            <div class="breakdown-label">MVP — najmenšia funkčná verzia</div>
             <div class="breakdown-stage">
-              <div class="block accent">Dochádzka</div>
+              <div class="block big accent">Prototyp</div>
             </div>
           </div>
 
-          <div class="breakdown-arrow reveal" style="font-size: 24px;">↓</div>
+          <div class="breakdown-arrow b-step" style="font-size: 24px;">↓</div>
 
-          <div class="breakdown-row reveal">
-            <div class="breakdown-label">Nabaľovanie — ďalšie procesy začnú dávať zmysel</div>
+          <div class="breakdown-row b-step">
+            <div class="breakdown-label">Nasadiť do života</div>
             <div class="breakdown-stage">
-              <div class="block">Rozpisy</div>
-              <div class="block outline">Výkazy</div>
-              <div class="block">Zmluvy</div>
-              <div class="block outline">Brigád.</div>
-              <div class="block">Chat</div>
+              <div class="block">Reálni useri testujú</div>
             </div>
           </div>
 
-          <div class="breakdown-arrow reveal" style="font-size: 24px;">↓</div>
+          <div class="breakdown-arrow b-step b-loop" style="font-size: 24px;">⟲</div>
 
-          <div class="breakdown-row reveal">
-            <div class="breakdown-label">Ekosystém — appky sa medzi sebou rozprávajú</div>
+          <div class="breakdown-row b-step">
+            <div class="breakdown-label">Postupné budovanie</div>
+            <div class="breakdown-stage">
+              <div class="block outline">Opravujem chyby</div>
+              <span class="breakdown-arrow">+</span>
+              <div class="block outline">Dopĺňam funkcie</div>
+            </div>
+          </div>
+
+          <div class="breakdown-arrow b-step" style="font-size: 24px;">↓</div>
+
+          <div class="breakdown-row b-step">
+            <div class="breakdown-label">Robustná appka v praxi</div>
             <div class="breakdown-stage">
               <div class="block accent">Chobotničiari</div>
-              <span class="breakdown-arrow">⇄</span>
-              <div class="block">Wonderhub</div>
-              <span class="breakdown-arrow">⇄</span>
-              <div class="block">Movie Critic</div>
+              <div class="block">Kompas</div>
+              <div class="block">Dashboardy</div>
+            </div>
+          </div>
+
+          <div class="breakdown-row b-step prons-grid">
+            <div>
+              <div class="breakdown-label" style="color: var(--accent);">+ Výhoda</div>
+              <ul class="prons-list">
+                <li>Rýchle nasadenie</li>
+                <li>Reálne testovanie userami</li>
+                <li>Podstatne lepšie výsledky</li>
+              </ul>
+            </div>
+            <div>
+              <div class="breakdown-label">− Nevýhoda</div>
+              <ul class="prons-list">
+                <li>Useri sú nahnevaní<br><small>ak nerozumejú prečo</small></li>
+              </ul>
             </div>
           </div>
         </div>
@@ -2209,6 +2287,7 @@
     loadAudioForCurrentSlide();
     resetTranscript(n);
     if (n === 3) resetTreeSteps();
+    if (n === 4) resetSlide4Steps();
   };
 
   // ===========================================================
@@ -2348,8 +2427,24 @@
     typeNext();
   }
 
+  // Slide 4 progressive reveal
+  function resetSlide4Steps() {
+    const steps = document.querySelectorAll('#slide4-flow .b-step');
+    steps.forEach((s, i) => s.classList.toggle('b-revealed', i === 0));
+  }
+  function updateSlide4Steps() {
+    if (currentSlide !== 4) return;
+    if (!audioPlayer.duration || !isFinite(audioPlayer.duration)) return;
+    const steps = document.querySelectorAll('#slide4-flow .b-step');
+    const ratio = audioPlayer.currentTime / audioPlayer.duration;
+    steps.forEach((s, i) => {
+      if (i === 0 || ratio >= i / steps.length) s.classList.add('b-revealed');
+    });
+  }
+
   audioPlayer.addEventListener('timeupdate', updateTranscript);
   audioPlayer.addEventListener('timeupdate', updateTreeSteps);
+  audioPlayer.addEventListener('timeupdate', updateSlide4Steps);
   audioPlayer.addEventListener('seeked', () => {
     resetTranscript(currentSlide);
     updateTranscript();
