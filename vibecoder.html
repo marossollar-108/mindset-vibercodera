@@ -185,7 +185,23 @@
   }
   .wave-bar.played { background: var(--accent); }
 
-  .upload-label { display: none; }
+  .upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-mute);
+    cursor: pointer;
+    padding: 4px 10px;
+    border: 1px dashed var(--ink-mute);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .upload-label:hover { color: var(--accent); border-color: var(--accent); }
+  .upload-label input { display: none; }
 
   /* Nav controls */
   .nav-controls {
@@ -879,12 +895,7 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 8px;
-    align-content: start;
-    align-self: start;
-    padding-right: clamp(0px, 24vw, 360px);
-  }
-  @media (max-width: 900px) {
-    .apps-grid { padding-right: 0; }
+    align-content: center;
   }
 
   .app-tile {
@@ -1235,47 +1246,47 @@
      ================================================================ */
   .transcript {
     position: absolute;
-    bottom: 24px;
+    bottom: 20px;
     left: 64px;
-    width: clamp(320px, 30vw, 480px);
-    height: clamp(120px, 16vh, 170px);
+    width: 220px;
+    height: 64px;
     background: var(--paper-2);
     border: 1px solid var(--ink);
-    padding: 14px 18px 12px;
+    padding: 8px 10px;
     overflow: hidden;
     z-index: 5;
     pointer-events: none;
-    opacity: 1;
+    opacity: 0.85;
   }
   .transcript::before {
     content: 'LIVE · TRANSCRIPT';
     position: absolute;
-    top: -9px;
-    left: 12px;
+    top: -8px;
+    left: 8px;
     background: var(--paper);
-    padding: 0 8px;
+    padding: 0 6px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.18em;
+    font-size: 8px;
+    letter-spacing: 0.15em;
     color: var(--ink-mute);
   }
   .transcript::after {
     content: '';
     position: absolute;
-    top: 10px;
-    right: 12px;
-    width: 7px;
-    height: 7px;
+    top: 6px;
+    right: 8px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--accent);
     animation: pulse 1.5s ease-in-out infinite;
   }
   .transcript-inner {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(13px, 1vw, 15px);
-    line-height: 1.65;
-    color: var(--ink-soft);
-    letter-spacing: 0.01em;
+    font-size: 7.5px;
+    line-height: 1.5;
+    color: var(--ink-mute);
+    letter-spacing: 0.02em;
     transition: transform 0.3s ease;
     word-spacing: 1px;
   }
@@ -1285,78 +1296,15 @@
     padding: 0 1px;
   }
   .transcript-inner .word.spoken {
-    color: var(--ink);
-    font-weight: 500;
+    color: var(--ink-soft);
   }
   .transcript-inner .word.current {
     color: var(--paper);
     background: var(--accent);
-    font-weight: 500;
   }
 
-  @media (max-width: 1100px) {
-    .transcript {
-      width: clamp(260px, 36vw, 360px);
-      height: 110px;
-      padding: 12px 14px 10px;
-    }
-    .transcript-inner { font-size: 11px; line-height: 1.55; }
-  }
   @media (max-width: 900px) {
     .transcript { display: none; }
-  }
-
-  /* ================================================================
-     QR WIDGET — desktop only, fixed bottom-right
-     ================================================================ */
-  .qr-widget {
-    position: fixed;
-    bottom: 88px;
-    right: 32px;
-    z-index: 6;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 14px 12px;
-    background: var(--paper-2);
-    border: 1px solid var(--ink);
-    pointer-events: none;
-  }
-  body[data-slide="6"] .qr-widget { display: flex; }
-  .qr-widget::before {
-    content: 'SKEN · OPEN';
-    position: absolute;
-    top: -9px;
-    left: 12px;
-    background: var(--paper);
-    padding: 0 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    color: var(--ink-mute);
-  }
-  .qr-widget img {
-    display: block;
-    width: clamp(240px, 20vw, 320px);
-    height: auto;
-    image-rendering: pixelated;
-  }
-  .qr-widget .qr-caption {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    color: var(--ink-soft);
-    text-align: center;
-    line-height: 1.4;
-    max-width: 320px;
-  }
-  .qr-widget .qr-caption strong {
-    color: var(--ink);
-    font-weight: 500;
-  }
-  @media (max-width: 900px) {
-    body[data-slide="6"] .qr-widget { display: none; }
   }
 
   /* ================================================================
@@ -1947,21 +1895,6 @@
               <span class="app-name">Edukačná hra</span>
               <span class="app-desc">Pre mladých podnikateľov</span>
             </div>
-            <div class="app-tile">
-              <span class="app-cat">CRM</span>
-              <span class="app-name">MiniKompas</span>
-              <span class="app-desc">Pre túlavých premietačov</span>
-            </div>
-            <div class="app-tile">
-              <span class="app-cat">BI</span>
-              <span class="app-name">Dashboardy</span>
-              <span class="app-desc">Live prehľady všetkých firiem</span>
-            </div>
-            <div class="app-tile">
-              <span class="app-cat">IoT</span>
-              <span class="app-name">PostMix váhy</span>
-              <span class="app-desc">Meranie hmotnosti sirupov</span>
-            </div>
             <div class="app-tile more">
               <span class="app-cat">+</span>
               <span class="app-name">a&nbsp;ďalšie…</span>
@@ -1983,24 +1916,16 @@
 
   </div>
 
-  <!-- QR WIDGET (desktop) -->
-  <aside class="qr-widget" aria-hidden="true">
-    <img src="qr.png" alt="QR — vibecoder.wanderhub.tech">
-    <div class="qr-caption">
-      Nájdete na<br><strong>vibecoder.wanderhub.tech</strong>
-    </div>
-  </aside>
-
   <!-- BOTTOM BAR -->
   <div class="bottombar">
 
     <div class="audio-wrap">
-      <button class="audio-btn" id="audio-btn" onclick="toggleAudio()">
+      <button class="audio-btn" id="audio-btn" onclick="toggleAudio()" disabled>
         <svg id="audio-icon" viewBox="0 0 16 16"><path d="M3 2 L13 8 L3 14 Z"/></svg>
       </button>
       <div class="audio-info">
         <div class="audio-info-line">
-          <span class="audio-status" id="audio-status">Slide 01 · klikni ▶ pre prehratie</span>
+          <span class="audio-status" id="audio-status">Bez audia · klikni na Upload</span>
           <span class="audio-time" id="audio-time">0:00 / 0:00</span>
         </div>
         <div class="waveform" id="waveform"></div>
@@ -2105,8 +2030,6 @@
 
     currentSlide = n;
     visited.add(n);
-    document.body.classList.toggle('on-limitless', n === 5);
-    document.body.dataset.slide = String(n);
     document.getElementById('current-slide').textContent = String(n).padStart(2, '0');
     document.getElementById('prev-btn').disabled = n === 1;
     document.getElementById('next-btn').disabled = n === totalSlides;
@@ -2164,21 +2087,8 @@
   const audioStatus = document.getElementById('audio-status');
   const audioTime = document.getElementById('audio-time');
 
-  // Per-slide audio — pre-mapped files in /audio
-  const slideAudio = {
-    1: { url: 'audio/1.mp3', name: 'slide-01.mp3' },
-    2: { url: 'audio/2.mp3', name: 'slide-02.mp3' },
-    3: { url: 'audio/3.mp3', name: 'slide-03.mp3' },
-    4: { url: 'audio/4.mp3', name: 'slide-04.mp3' },
-    5: { url: 'audio/5.mp3', name: 'slide-05.mp3' },
-    6: { url: 'audio/6.mp3', name: 'slide-06.mp3' },
-  };
-
-  // User-gesture flag — once true, future slide changes attempt autoplay.
-  let userHasInteracted = false;
-  ['click','keydown','touchstart'].forEach(ev =>
-    window.addEventListener(ev, () => { userHasInteracted = true; }, { once: true })
-  );
+  // Per-slide audio (object URLs go here when uploaded)
+  const slideAudio = {};
 
   function handleAudioUpload(e) {
     const file = e.target.files[0];
@@ -2190,29 +2100,15 @@
   }
 
   function loadAudioForCurrentSlide() {
-    pauseAudio();
-    resetTranscript(currentSlide);
     const entry = slideAudio[currentSlide];
     if (entry) {
       audioPlayer.src = entry.url;
-      audioPlayer.load();
       audioBtn.disabled = false;
-      audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
-      if (userHasInteracted) {
-        const p = audioPlayer.play();
-        if (p && typeof p.then === 'function') {
-          p.then(() => {
-            audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
-            audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · prehráva`;
-          }).catch(() => {
-            audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · klikni ▶ pre prehratie`;
-          });
-        }
-      }
+      audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · ${entry.name}`;
     } else {
       audioPlayer.removeAttribute('src');
       audioBtn.disabled = true;
-      audioStatus.textContent = 'Bez audia';
+      audioStatus.textContent = 'Bez audia · klikni na Upload';
       audioTime.textContent = '0:00 / 0:00';
       resetWaveform();
     }
@@ -2220,25 +2116,13 @@
 
   function toggleAudio() {
     if (!audioPlayer.src) return;
-    userHasInteracted = true;
     if (audioPlayer.paused) {
-      const p = audioPlayer.play();
-      if (p && typeof p.then === 'function') {
-        p.then(() => {
-          audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
-          audioStatus.textContent = `Slide ${String(currentSlide).padStart(2,'0')} · prehráva`;
-        }).catch((err) => {
-          audioStatus.textContent = `Chyba: ${err.message || err.name}`;
-        });
-      }
+      audioPlayer.play();
+      audioIcon.innerHTML = '<rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/>';
     } else {
       pauseAudio();
     }
   }
-
-  audioPlayer.addEventListener('error', () => {
-    audioStatus.textContent = `Audio chyba (slide ${String(currentSlide).padStart(2,'0')})`;
-  });
 
   function pauseAudio() {
     if (!audioPlayer.paused) audioPlayer.pause();
@@ -2370,8 +2254,8 @@
       '1–6                · skok na slide\n' +
       '↓ (na slide 3)     · odhaľ ďalší krok\n\n' +
       'AUDIO\n\n' +
-      'Audio sa spúšťa automaticky pri prechode na ďalší slide.\n' +
-      'Prvý slide treba odštartovať kliknutím na ▶.'
+      'Klikni na "↑ Audio" v dolnej lište a nahraj zvuk pre aktuálny slide.\n' +
+      'Každý slide má vlastné audio. Pri prepnutí sa zastaví.'
     );
   }
 
